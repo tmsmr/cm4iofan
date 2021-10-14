@@ -1,0 +1,80 @@
+name: release fanctl
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release_fanctl:
+    name: release_fanctl
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: store tag name
+        id: store_tag
+        run: echo "::set-output name=release_tag::${GITHUB_REF/refs\/tags\//}"
+      - name: create build folder
+        run: mkdir $GITHUB_WORKSPACE/fanctl/build
+      - name: build arm target
+        run: |
+          cd $GITHUB_WORKSPACE/fanctl
+          GOOS=linux GOARCH=arm go build -v -o build/fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm
+      - name: build arm64 target
+        run: |
+          cd $GITHUB_WORKSPACE/fanctl
+          GOOS=linux GOARCH=arm64 go build -v -o build/fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm64
+      - name: compress build artifacts
+        id: compress_artifacts
+        run: |
+          cd $GITHUB_WORKSPACE/fanctl/build
+          tar czvf fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm.tar.gz fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm
+          tar czvf fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm64.tar.gz fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm64
+          echo "::set-output name=arm_path::$GITHUB_WORKSPACE/fanctl/build/fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm.tar.gz"
+          echo "::set-output name=arm_name::fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm.tar.gz"
+          echo "::set-output name=arm64_path::$GITHUB_WORKSPACE/fanctl/build/fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm64.tar.gz"
+          echo "::set-output name=arm64_name::fanctl-${{ steps.store_tag.outputs.release_tag }}.linux-arm64.tar.gz"
+      - name: create SHA512SUMS.txt
+        id: create_shasums
+        run: |
+          cd $GITHUB_WORKSPACE/fanctl/build
+          for f in *.tar.gz; do sha512sum $f >> SHA512SUMS.txt; done
+          echo "::set-output name=shasums_path::$GITHUB_WORKSPACE/fanctl/build/SHA512SUMS.txt"
+      - name: create release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.store_tag.outputs.release_tag }}
+          tag_name: ${{ steps.store_tag.outputs.release_tag }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: upload arm artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.compress_artifacts.outputs.arm_path }}
+          asset_name: ${{ steps.compress_artifacts.outputs.arm_name }}
+          asset_content_type: application/gzip
+      - name: upload arm64 artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.compress_artifacts.outputs.arm64_path }}
+          asset_name: ${{ steps.compress_artifacts.outputs.arm64_name }}
+          asset_content_type: application/gzip
+      - name: upload SHA512SUMS.txt
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.create_shasums.outputs.shasums_path }}
+          asset_name: SHA512SUMS.txt
+          asset_content_type: text/plain
