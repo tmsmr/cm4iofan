@@ -2,8 +2,9 @@ package cm4iofan
 
 import (
 	"errors"
-	"github.com/go-daq/smbus"
 	"math"
+
+	"github.com/go-daq/smbus"
 )
 
 const (
@@ -20,8 +21,7 @@ const (
 	Emc2301ProductIdVal = 0x37
 
 	// configuration (emc2301.pdf: 4.1 Fan Control Modes of Operation, 6.14 Fan Configuration Registers)
-	Emc2301ConfigReg      = 0x32
-	Emc2301ConfigENAGxBit = 7
+	Emc2301ConfigReg = 0x32
 
 	// fan drive setting (emc2301.pdf: 6.12 Fan Drive Setting Register)
 	Emc2301DutyCycleReg = 0x30
@@ -43,21 +43,20 @@ func New() (*EMC2301, error) {
 	if err != nil {
 		return nil, err
 	}
-	v, err := c.ReadReg(Emc2301Addr, Emc2301ProductIdReg)
+	id, err := c.ReadReg(Emc2301Addr, Emc2301ProductIdReg)
 	if err != nil {
 		return nil, err
 	}
-	if Emc2301ProductIdVal != v {
+	if Emc2301ProductIdVal != id {
 		return nil, errors.New("unexpected Product ID")
 	}
-	// read fan configuration
-	v, err = c.ReadReg(Emc2301Addr, Emc2301ConfigReg)
+	conf, err := c.ReadReg(Emc2301Addr, Emc2301ConfigReg)
 	if err != nil {
 		return nil, err
 	}
-	// ensure "Direct Setting mode" is active
-	v |= 0 << Emc2301ConfigENAGxBit
-	err = c.WriteReg(Emc2301Addr, Emc2301ConfigReg, v)
+	// set RNG1[1:0] to 500 RPM
+	conf &= ^(uint8(0b11) << 5)
+	err = c.WriteReg(Emc2301Addr, Emc2301ConfigReg, conf)
 	if err != nil {
 		return nil, err
 	}
@@ -96,5 +95,5 @@ func (ctrl *EMC2301) GetRPM() (int, error) {
 	tach := uint16(h) << 5
 	tach |= uint16(l) >> 3
 	// emc2301.pdf: EQUATION 4-3: SIMPLIFIED TACH CONVERSION
-	return int(Emc2301Tach2RPM / uint32(tach)) * 2, nil
+	return int(Emc2301Tach2RPM / uint32(tach)), nil
 }
