@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/tmsmr/cm4iofan"
 	"os"
 	"strconv"
+
+	"github.com/tmsmr/cm4iofan"
 )
 
 func usage() {
@@ -12,7 +13,7 @@ func usage() {
 	$ fanctl set VALUE
 Get PWM duty cycle in %
 	$ fanctl get
-Get current (guessed) RPM:
+Get current RPM:
 	$ fanctl rpm`
 	fmt.Println(usage)
 	os.Exit(1)
@@ -38,7 +39,15 @@ func rpm(ctrl *cm4iofan.EMC2301) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(rpm)
+	if rpm.Stopped {
+		fmt.Println(0)
+		return
+	}
+	if rpm.Undef {
+		fmt.Println("?")
+		return
+	}
+	fmt.Println(rpm.Rpm)
 }
 
 func main() {
@@ -46,6 +55,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	if len(os.Args) < 2 {
 		usage()
 	}
