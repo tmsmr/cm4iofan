@@ -9,9 +9,9 @@
 ## Using the Go Module
 
 ```go
-package main
-
 import "github.com/tmsmr/cm4iofan"
+ 
+...
 
 ctrl, err := cm4iofan.New()
 if err != nil {
