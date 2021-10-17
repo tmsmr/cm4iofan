@@ -45,7 +45,7 @@ The EMC2301 has a built-in closed loop Fan Speed Control algorithm (Besides many
 I opted for the Direct Setting mode, because it feels more natural to me (Yes, i know that duty cycle/RPM is far from linear...).
 
 ### Should i use this for my 24/7-running project?
-If you want a reliable/automatic cooling solution, you should probably go with something like https://github.com/neg2led/cm4io-fan.
+If you want nothing but a reliable/automatic cooling solution for your CM4IO, you should probably go with something like https://github.com/neg2led/cm4io-fan.
 
 There are scenarios where this Module might be handy (Well, that's why i built it...). But keep in mind, all you do with it, is setting the fan's PWM signal:
 - Some fans won't stop with 0% duty cycle.
