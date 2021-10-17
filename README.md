@@ -35,6 +35,9 @@ $ fanctl rpm
 2623
 ```
 
+## POC with thermal monitoring
+You may use https://github.com/tmsmr/chilld as thermal controller on your Raspberry Pi Compute Module 4 IO Board.
+
 ## Comments
 
 ### Direct Setting mode vs. Fan Speed Control mode
