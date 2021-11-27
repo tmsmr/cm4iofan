@@ -25,7 +25,7 @@ if err != nil {
 
 ## Using `fanctl`
 - Build with `cd fanctl && go build`.
-- For every tagged version of the Go Module, the `fanctl` utility is built (Available on the Releases page).
+- For every tagged version of the Go Module, the `fanctl` utility is built in a GitHub Action (Available on the Releases page).
 
 ```shell
 $ fanctl set 50
